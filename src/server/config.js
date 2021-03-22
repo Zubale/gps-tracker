@@ -29,7 +29,7 @@ export const firebaseProjectId = process.env.FIREBASE_PROJECT_ID;
 export const firebaseClientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 export const parserLimit = process.env.BODY_PARSER_LIMIT || '1mb';
 export const password = process.env.PASSWORD;
-export const pgConnectionString = process.env.DATABASE_URL;
+export const pgConnectionString = process.env.DATABASE_URL ? '?ssl=true';
 export const port = process.env.PORT || 9000;
 export const withAuth = !!process.env.SHARED_DASHBOARD;
 export const {
