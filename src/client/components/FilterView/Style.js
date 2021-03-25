@@ -3,7 +3,7 @@ import { makeStyles } from '@material-ui/core/styles';
 const useStyles = makeStyles(theme => ({
   cardsContainer: { padding: 5 },
   header: {},
-  appBar: { backgroundColor: theme.palette.primary.dark },
+  appBar: { backgroundColor: '#135bf1' },
   paddingRow: {
     marginTop: 10,
     // marginBottom: 10,
