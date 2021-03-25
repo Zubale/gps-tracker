@@ -72,8 +72,8 @@ export async function deleteDevice(
 ) {
   const device = await DeviceModel.findOne({
     where: !isAdmin
-      ? { company_token: org, id: deviceId }
-      : { id: deviceId },
+      ? { company_token: org, device_id: deviceId }
+      : { device_id: deviceId },
     attributes: [
       'id',
       'device_id',
@@ -88,7 +88,7 @@ export async function deleteDevice(
     return null;
   }
 
-  const whereByDevice = { device_id: deviceId };
+  const whereByDevice = { device_id: device.id };
   const where = { ...whereByDevice };
   if (startDate && endDate && new Date(startDate) && new Date(endDate)) {
     where.recorded_at = { [Op.between]: [new Date(startDate), new Date(endDate)] };
@@ -97,7 +97,7 @@ export async function deleteDevice(
   const locationsCount = await LocationModel.count({ where: whereByDevice });
   if (!locationsCount) {
     await DeviceModel.destroy({
-      where: { id: deviceId },
+      where: { id: device.id },
       cascade: true,
     });
   }
