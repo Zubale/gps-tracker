@@ -404,10 +404,11 @@ export const loadDevices = (): ThunkAction => async (dispatch: Dispatch, getStat
       .map(({
         id, device_id: deviceId, framework,
       }: Object) => ({
-        id,
-        name: framework
-          ? `${deviceId}(${framework})`
-          : `${deviceId}`,
+        id: `${deviceId}`,
+        name: `${deviceId}`
+        // name: framework
+        //   ? `${deviceId}(${framework})`
+        //   : `${deviceId}`,
       }));
     return dispatch(setDevices(devices));
   } catch (e) {
