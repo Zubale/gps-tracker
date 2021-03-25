@@ -48,7 +48,7 @@ const HeaderView = ({
       >
         <MenuIcon />
       </IconButton>
-      <Typography variant='h6'>Zubale GPS Tracker</Typography>
+      <Typography variant='h6'><img src="https://zubale-zoul-prod.herokuapp.com/images/logo.png" style={{display: 'block', float: 'left', marginTop: 6, marginRight: 5}}> GPS Tracker</Typography>
     </Toolbar>
     {children}
   </AppBar>
