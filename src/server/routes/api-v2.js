@@ -47,7 +47,7 @@ router.post('/register', async (req, res) => {
     uuid,
     version,
   } = req.body;
-  console.log('PAY ATTENTION register device with body', req.body)
+  console.log('PAY ATTENTION register device with body', req.body, req.params)
 
   // eslint-disable-next-line no-console
   console.info(
