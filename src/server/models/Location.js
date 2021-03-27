@@ -212,6 +212,7 @@ export async function create(
       0,
     );
   }
+  console.log('PAY ATTENTION  creating location with params', params)
 
   const {
     company_token: companyToken,
