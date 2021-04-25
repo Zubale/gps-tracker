@@ -14,7 +14,7 @@
     "migrate": "babel-node ./src/server/database/migrate.js"
   },
   "engines": {
-    "node": "12.18.0"
+    "node": "14.6.0"
   },
   "type": "commonjs",
   "author": "Chris Scott, Transistor Software",
@@ -107,7 +107,7 @@
     "reselect": "^3.0.1",
     "rsa-key-gen": "^0.6.1",
     "sequelize": "^5.22.3",
-    "webpack": "^4.39.3",
+    "webpack": "4.46.0",
     "webpack-cli": "^3.3.8"
   },
   "devDependencies": {
