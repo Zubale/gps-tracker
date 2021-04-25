@@ -13,6 +13,9 @@
     "heroku-postbuild": "rimraf build/ && webpack -p --progress && cross-env NPM_CONFIG_PRODUCTION=true npm prune --production",
     "migrate": "babel-node ./src/server/database/migrate.js"
   },
+  "engines": {
+    "node": "12.18.0"
+  },
   "type": "commonjs",
   "author": "Chris Scott, Transistor Software",
   "license": "MIT",
