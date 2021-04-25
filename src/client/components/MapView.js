@@ -540,6 +540,23 @@ class MapView extends Component<Props, MapState> {
           }
         }
       }
+
+      console.log('currentLocation', currentLocation)
+      if (currentLocation){
+        let marker = this.buildLocationMarker(currentLocation, { map: this.gmap });
+        marker.setZIndex(1000000);
+        marker.setIcon({
+          url:'/images/pin.png', 
+          size: new google.maps.Size(100, 100), 
+          scaledSize: new google.maps.Size(100, 100),
+          origin: new google.maps.Point(0, -20),
+        });
+        this.markers.push(marker);
+        const latLng = new google.maps.LatLng(currentLocation.latitude, currentLocation.longitude);
+        this.polyline.getPath().push(latLng);
+        this.motionChangePolylines.push(this.buildMotionChangePolyline(null, latLng));
+      }
+      
       this.clustering();
     } else {
       // keep existing markers - just update their visibility
@@ -563,7 +580,7 @@ class MapView extends Component<Props, MapState> {
       console.timeEnd('renderMarkers: Visibility');
     }
     // handle current location
-    if (isWatching && currentLocation) {
+    if (/*isWatching && */currentLocation) {
       console.time('renderMarkers: Current Location');
       const latLng = new google.maps.LatLng(currentLocation.latitude, currentLocation.longitude);
       this.gmap.setCenter(latLng);

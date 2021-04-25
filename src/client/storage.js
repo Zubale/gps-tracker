@@ -6,6 +6,8 @@ import omitBy from 'lodash/omitBy';
 import { type Tab } from 'reducer/state';
 import { type AuthInfo, type AuthSettings } from 'reducer/types';
 import cloneState from 'utils/cloneState';
+import axios from 'axios'
+import _ from 'lodash'
 
 export type StoredSettings = {|
   activeTab: Tab,
@@ -112,16 +114,46 @@ function encodeEndDate(date: ?Date) {
   }
   return `${y}-${mon}-${d} ${h}:${min}`;
 }
-export function getUrlSettings(): $Shape<StoredSettings> {
+export async function getUrlSettings(): $Shape<StoredSettings> {
+
   const params = queryString.parse(window.location.search);
-  const result = omitBy(
+  let result = omitBy(
     {
-      deviceId: params.device,
+      token: params.token,
+      deviceId: params.user,
       startDate: parseStartDate(params.start),
       endDate: parseEndDate(params.end),
     },
     isUndefined,
   );
+  console.log('result', result)
+  if ( !result.token && !result.deviceId && !result.startDate && !result.endDate){
+    console.log('some alert, really we don\'t have issues')
+    window.location.replace("https://zubale.com");
+  }
+  let quest = null
+  if ( result.token ) {
+    try {
+      const response = await axios.get(`https://gateway-api-prod.zubale.com/quests/${result.token}`, {
+        headers: {
+          'Authorization': 'cfe6d99531ee4deb9f6600ddd1e09bd4',
+          'Content-Type': 'application/json'
+        }
+      })
+      console.log({response})
+      quest = response.data
+    } catch (error) {
+      console.log({error})
+    }
+  }
+  if ( _.get(quest, 'pickingAndDelivery', false) && _.get(quest, 'reservation.userId', '') ) {
+    result.deviceId = quest.reservation.userId
+    result.startDate = new Date(quest.pickingAndDelivery.pickupWindowStartTime)
+    result.endDate = new Date(quest.pickingAndDelivery.deliveryWindowEndTime)
+    console.log('quest.pickingAndDelivery.pickupWindowStartTime', quest.pickingAndDelivery.pickupWindowStartTime)
+    console.log('quest.pickingAndDelivery.deliveryWindowEndTime', quest.pickingAndDelivery.deliveryWindowEndTime)
+  }
+  console.log({result})
   return result;
 }
 export function setUrlSettings(
@@ -141,7 +173,7 @@ export function setUrlSettings(
   const hasToken = accessToken || org;
   const mainPart = orgTokenFromSearch ? `/${orgTokenFromSearch}` : '';
   const search = {
-    device: deviceId,
+    user: deviceId,
     end: encodeEndDate(endDate),
     start: encodeStartDate(startDate),
   };

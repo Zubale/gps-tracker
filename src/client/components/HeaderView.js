@@ -10,7 +10,7 @@ import React from 'react';
 
 import logo from '../assets/images/transistor-logo.svg';
 
-const style = { justifyContent: 'space-between' };
+const style = {} //{ justifyContent: 'space-between' };
 const margin = { marginRight: '-20px' };
 type Props = {|
   classes: {|

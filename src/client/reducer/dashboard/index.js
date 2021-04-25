@@ -496,7 +496,7 @@ export const loadInitialData =
     await dispatch(setOrgTokenFromSearch(id));
     const { dashboard: { orgTokenFromSearch } } = getState();
     const existingSettings = getSettings(orgTokenFromSearch);
-    const urlSettings = getUrlSettings();
+    const urlSettings = await getUrlSettings();
     await dispatch(applyExistingSettings(existingSettings));
     await dispatch(applyExistingSettings(urlSettings));
     await dispatch(setHasData(false));

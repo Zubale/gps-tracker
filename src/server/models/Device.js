@@ -18,6 +18,7 @@ export async function getDevice({
     where: whereConditions,
     attributes: [
       'id',
+      'phone',
       'user_id',
       'device_model',
       'company_id',
@@ -47,6 +48,7 @@ export async function getDevices(params, isAdmin) {
     attributes: [
       'id',
       'user_id',
+      'phone',
       'device_model',
       'company_id',
       'company_token',
@@ -77,6 +79,7 @@ export async function deleteDevice(
     attributes: [
       'id',
       'user_id',
+      'phone',
       'device_model',
       'company_id',
       'company_token',

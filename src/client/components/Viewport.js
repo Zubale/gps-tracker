@@ -50,10 +50,12 @@ const Viewport = ({
   logout,
 }: Props) => {
   const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
   const hide_drawer = urlParams.get('hide_drawer');
+  const has_token = token != null && String(token).length
 
   const [tabIndex, setTabIndex] = useState(activeTabIndex);
-  const [open, setOpen] = React.useState(hide_drawer === '1' ? false : true);
+  const [open, setOpen] = React.useState(hide_drawer === '1' || has_token > 0 ? false : true);
   const classes = useStyles();
 
   return (
@@ -73,7 +75,9 @@ const Viewport = ({
             onChange={(e: Event, index: number) => setTabIndex(index)}
           >
             <Tab label='Map' />
-            <Tab label='Data' />
+            {
+              !has_token && <Tab label='Data' />
+            }
           </Tabs>
           {accessToken && shared && (
             <IconButton onClick={logout} className={classes.logout} aria-label='logout'>
