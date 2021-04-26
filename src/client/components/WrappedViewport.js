@@ -2,6 +2,9 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 
+import queryString from 'query-string';
+import isUndefined from 'lodash/isUndefined';
+import omitBy from 'lodash/omitBy';
 import type { GlobalState } from 'reducer/state';
 import { prepareView as prepareAction } from 'reducer/auth';
 
@@ -30,6 +33,22 @@ const WrappedViewport = ({
   const urlParams = new URLSearchParams(window.location.search);
   const urlParamsToken = urlParams.get('token');
   const has_token = urlParamsToken != null && String(urlParamsToken).length
+
+  const params = queryString.parse(window.location.search);
+  let result = omitBy(
+    {
+      token: params.token,
+      deviceId: params.user,
+      startDate: params.start,
+      endDate: params.end,
+    },
+    isUndefined,
+  );
+  console.log('result 1', result)
+  if ( !result.token && !result.deviceId && !result.startDate && !result.endDate){
+    console.log('some alert, really we don\'t have issues')
+    window.location.replace("https://zubale.com");
+  }
 
   if ( !token && has_token && String(urlParamsToken).length == 24 ) { // quest id
     token = 'zubale'
