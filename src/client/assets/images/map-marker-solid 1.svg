@@ -1,0 +1,15 @@
+<svg width="131" height="175" viewBox="0 0 131 175" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g clip-path="url(#clip0)">
+<path d="M58.7685 171.469C9.2007 99.4735 0 92.0845 0 65.625C0 29.3812 29.3252 0 65.5 0C101.675 0 131 29.3812 131 65.625C131 92.0845 121.799 99.4735 72.2315 171.469C68.9787 176.177 62.021 176.177 58.7685 171.469Z" fill="#135CF1"/>
+<rect x="9" y="8" width="113" height="113" rx="56.5" fill="url(#pattern0)"/>
+</g>
+<defs>
+<pattern id="pattern0" patternContentUnits="objectBoundingBox" width="1" height="1">
+<use xlink:href="#image0" transform="scale(0.0104167)"/>
+</pattern>
+<clipPath id="clip0">
+<rect width="131" height="175" fill="white"/>
+</clipPath>
+<image id="image0" width="96" height="96" xlink:href="https://zubale-zombie.s3.amazonaws.com/static-files/dev/logos/retailer/chedraui.png"/>
+</defs>
+</svg>

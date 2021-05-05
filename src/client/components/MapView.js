@@ -18,6 +18,8 @@ import {
 import { COLORS, MAX_POINTS } from '../constants';
 
 import MarkerClusterer from './MarkerClusterer';
+import { object } from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 
 const API_KEY = window.GOOGLE_MAPS_API_KEY || 'AIzaSyA9j72oZA5SmsA8ugu57pqXwpxh9Sn4xuM';
 
@@ -43,6 +45,8 @@ type Props = {|
   ...StateProps,
   ...DispatchProps,
   open: boolean,
+  simpleUI: boolean,
+  quest: object,
 |};
 
 type MapState = {|
@@ -98,7 +102,7 @@ class MapView extends Component<Props, MapState> {
 
   // Fit Bounds, postpone if gmap is not ready, also postpone if tab is not active
   fitBounds = (payload: FitBoundsPayload) => {
-    const { isActiveTab, locations } = this.props;
+    const { isActiveTab, locations, currentLocation, quest } = this.props;
     if (!isActiveTab) {
       this.postponedFitBoundsPayload = payload;
       return;
@@ -109,14 +113,27 @@ class MapView extends Component<Props, MapState> {
         locations.forEach((location: Location) => {
           bounds.extend(new google.maps.LatLng(location.latitude, location.longitude));
         });
+        if ( quest ) {
+          bounds.extend(new google.maps.LatLng(quest.location.latitude, quest.location.longitude));
+          bounds.extend(new google.maps.LatLng(quest.location.latitude, quest.location.longitude));
+
+          bounds.extend(new google.maps.LatLng(quest.pickingAndDelivery.dropOffLocation.latitude, quest.pickingAndDelivery.dropOffLocation.longitude));
+          bounds.extend(new google.maps.LatLng(quest.pickingAndDelivery.dropOffLocation.latitude, quest.pickingAndDelivery.dropOffLocation.longitude));
+        }
         this.gmap.fitBounds(bounds);
       } else if (locations.length === 1) {
         const [location] = locations;
         this.gmap.setCenter(new google.maps.LatLng(location.latitude, location.longitude));
       }
+      // if (locations.length > 0) {
+      //   const location = currentLocation || locations[0];
+      //   console.log('location', location)
+      //   this.gmap.setCenter(new google.maps.LatLng(location.latitude, location.longitude));
+      // }
     } else {
       setTimeout(() => this.fitBounds(payload), 1000);
     }
+    
   };
 
   onBoundChange = () => {
@@ -157,7 +174,7 @@ class MapView extends Component<Props, MapState> {
       zIndex: 1,
       geodesic: true,
       strokeColor: COLORS.polyline_color,
-      strokeOpacity: 0.6,
+      strokeOpacity: 1,
       strokeWeight: 8,
       icons: [seq],
     });
@@ -240,6 +257,16 @@ class MapView extends Component<Props, MapState> {
     if (options.selected) {
       scale *= 2;
     }
+    // if (this.props.simpleUI) {
+    //   if (path == google.maps.SymbolPath.FORWARD_OPEN_ARROW || path == google.maps.SymbolPath.FORWARD_CLOSED_ARROW || path == google.maps.SymbolPath.CIRCLE) {
+    //     scale = 4
+    //     options.fillColor = COLORS.white
+    //     options.fillOpacity = 0.01
+    //     options.strokeWeight = 0.01
+    //     options.strokeColor = COLORS.white
+    //   }
+    // }
+    
 
     return {
       path,
@@ -266,6 +293,7 @@ class MapView extends Component<Props, MapState> {
   }
 
   clustering () {
+    console.log('props are', this.props)
     const { enableClustering, showMarkers } = this.props;
     if (
       !showMarkers ||
@@ -430,7 +458,7 @@ class MapView extends Component<Props, MapState> {
 
   // Build a bread-crumb location marker.
   buildLocationMarker (location: Location, options: any = {}) {
-    const { onSelectLocation } = this.props;
+    const { onSelectLocation, simpleUI } = this.props;
     const zIndex = options.zIndex || 1;
     const marker = new google.maps.Marker({
       zIndex,
@@ -440,7 +468,7 @@ class MapView extends Component<Props, MapState> {
       position: new google.maps.LatLng(location.latitude, location.longitude),
     });
 
-    marker.addListener('click', () => onSelectLocation(location.uuid));
+    marker.addListener('click', () => simpleUI ? null : onSelectLocation(location.uuid));
     return marker;
   }
 
@@ -498,6 +526,8 @@ class MapView extends Component<Props, MapState> {
       showMarkers,
       showPolyline,
       testMarkers,
+      quest,
+      simpleUI,
     } = this.props;
 
     // if locations have not changed - do not clear markers
@@ -525,8 +555,10 @@ class MapView extends Component<Props, MapState> {
         if (location.geofence) {
           this.buildGeofenceMarker(location, { map: showGeofenceHits ? this.gmap : null });
         } else {
-          const marker = this.buildLocationMarker(location, { map: showMarkers ? this.gmap : null });
-          this.markers.push(marker);
+          if ( !simpleUI ) {
+            const marker = this.buildLocationMarker(location, { map: showMarkers ? this.gmap : null });
+            this.markers.push(marker);
+          }
         }
         this.polyline.getPath().push(latLng);
 
@@ -544,13 +576,20 @@ class MapView extends Component<Props, MapState> {
       console.log('currentLocation', currentLocation)
       if (currentLocation){
         let marker = this.buildLocationMarker(currentLocation, { map: this.gmap });
-        marker.setZIndex(1000000);
-        marker.setIcon({
-          url:'/images/pin.png', 
-          size: new google.maps.Size(100, 100), 
-          scaledSize: new google.maps.Size(100, 100),
-          origin: new google.maps.Point(0, -20),
-        });
+        // marker.setZIndex(1000000);
+        // marker.setIcon({
+        //   url:'/images/zubale_pin.png', 
+        //   size: new google.maps.Size(46, 87), 
+        //   scaledSize: new google.maps.Size(46, 87),
+        //   origin: new google.maps.Point(0, 0),
+        // });
+        // marker.setAnimation(google.maps.Animation.DROP)
+        // marker.setIcon({
+        //   url:'/images/pin.png', 
+        //   size: new google.maps.Size(100, 100), 
+        //   scaledSize: new google.maps.Size(100, 100),
+        //   origin: new google.maps.Point(0, -20),
+        // });
         this.markers.push(marker);
         const latLng = new google.maps.LatLng(currentLocation.latitude, currentLocation.longitude);
         this.polyline.getPath().push(latLng);
@@ -587,6 +626,7 @@ class MapView extends Component<Props, MapState> {
       this.currentLocationMarker.setMap(this.gmap);
       this.locationAccuracyCircle.setMap(this.gmap);
       this.currentLocationMarker.setPosition(latLng);
+      this.currentLocationMarker.setZIndex(1000000)
       this.locationAccuracyCircle.setCenter(latLng);
       this.locationAccuracyCircle.setRadius(currentLocation.accuracy);
       console.timeEnd('renderMarkers: Current Location');
@@ -594,6 +634,24 @@ class MapView extends Component<Props, MapState> {
       this.currentLocationMarker.setMap(null);
       this.locationAccuracyCircle.setMap(null);
     }
+
+    if ( quest ) {
+      if (document.getElementById("storeContainer")) {
+        document.getElementById("storeContainer").innerHTML = this.getSvgMarker(quest.store.retailer.logoUrl);
+      }
+
+      // let marker = this.buildLocationMarker(quest.location, { map: this.gmap });
+      // marker.setZIndex(1000000);
+      // marker.setIcon({
+      //   url:  'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgLogo), 
+      //   size: new google.maps.Size(46, 87), 
+      //   scaledSize: new google.maps.Size(46, 87),
+      //   origin: new google.maps.Point(0, 0),
+      // });
+      // marker.setAnimation(google.maps.Animation.DROP)
+      // this.markers.push(marker);
+    }
+
     // draw selectedMarker
     console.time('renderMarkers: Selected Location');
     this.updateSelectedLocation();
@@ -601,6 +659,25 @@ class MapView extends Component<Props, MapState> {
     console.timeEnd('renderMarkers');
   }
 
+  getSvgMarker (logoUrl: string) {
+    return `<svg id="${logoUrl}" key="${logoUrl}"  style="width: 43px; height: 58px; position: absolute; top: -58px; left: -21px;" width="43" height="58" viewBox="0 0 131 175" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g clip-path="url(#clip0)">
+    <path d="M58.7685 171.469C9.2007 99.4735 0 92.0845 0 65.625C0 29.3812 29.3252 0 65.5 0C101.675 0 131 29.3812 131 65.625C131 92.0845 121.799 99.4735 72.2315 171.469C68.9787 176.177 62.021 176.177 58.7685 171.469Z" fill="#135CF1"/>
+    <rect x="9" y="8" width="113" height="113" rx="56.5" fill="url(#pattern0)"/>
+    </g>
+    <defs>
+    <pattern id="pattern0" patternContentUnits="objectBoundingBox" width="1" height="1">
+    <use xlink:href="#image0" transform="scale(0.0104167)"/>
+    </pattern>
+    <clipPath id="clip0">
+    <rect width="131" height="175" fill="white"/>
+    </clipPath>
+    <image id="image0" width="96" height="96" xlink:href="${logoUrl}"/>
+    </defs>
+    </svg>
+    `
+  }
+  
   /**
   * Render manually added test markers
   {
@@ -643,7 +720,7 @@ class MapView extends Component<Props, MapState> {
   }
 
   render () {
-    const { isActiveTab } = this.props;
+    const { isActiveTab, quest, currentLocation } = this.props;
     const { center } = this.state;
 
     if (this.gmap) {
@@ -655,19 +732,62 @@ class MapView extends Component<Props, MapState> {
     if (!isActiveTab && !this.gmap) {
       return null;
     }
+    console.log('quest', quest)
+    console.log('center', center)
+    if ( center ) {
+      center.lng = center.lng + 1
+    }
 
     return (
-      <GoogleMap
+      [<GoogleMap
         yesIWantToUseGoogleMapApiInternals
         bootstrapURLKeys={{
           key: API_KEY,
           libraries: 'geometry',
         }}
+        mapContainerStyle={{marginLeft: 60}}
         className='map'
         center={center}
-        zoom={15}
+        zoom={17}
+        layerTypes={['TrafficLayer', 'TransitLayer']}
         onGoogleApiLoaded={this.onMapLoaded}
-      />
+      >
+        {quest && [
+          <div
+            id={'storeContainer'}
+            key={'storeContainer'}
+            data-tip={`Ubicacieon de la tienda ${quest.store.retailer.name}`} data-for='storeInfo'
+            lat={quest.location.latitude}
+            lng={quest.location.longitude}
+            />,
+          <div
+            id={'dropOffContainer'}
+            key={'dropOffContainer'}
+            data-tip="Ubicación del cliente" data-for='dropOffInfo'
+            lat={quest.pickingAndDelivery.dropOffLocation.latitude}
+            lng={quest.pickingAndDelivery.dropOffLocation.longitude}
+          >
+            <img src="images/client.svg" style={{width: 43, height: 58, position: 'absolute', top: -58, left: -21}}/>
+          </div>
+        ]
+        }
+        {
+          currentLocation && 
+          <div
+            id={'currentLocation'}
+            key={'currentLocation'}
+            data-tip="Ubicación del paquete en ruta" data-for='zubaleroInfo'
+            lat={currentLocation.latitude}
+            lng={currentLocation.longitude}
+          >
+            <img src="/images/zubale_pin.png" style={{width: 46, height: 87, position: 'absolute', top: -87, left: -23}}/>
+          </div>
+        }
+      </GoogleMap>,
+        <ReactTooltip place="top" type="info" effect="solid" id='storeInfo'/>,
+        <ReactTooltip place="top" type="info" effect="solid" id='dropOffInfo'/>,
+        <ReactTooltip place="top" type="info" effect="solid" id='zubaleroInfo'/>
+      ]
     );
   }
 }
@@ -702,14 +822,20 @@ const filteredLocationSelector = createSelector(
 
 const mapStateToProps = (state: GlobalState) => {
   const { dashboard } = state;
+  const locations = filteredLocationSelector(state)
+  const currentLocation = locations[0] //dashboard.currentLocation || (locations.length > 0 ? locations[0] :)
   return {
-    locations: filteredLocationSelector(state),
+    state,
+    locations,
+    simpleUI: !!dashboard.quest,
+    token: dashboard.token,
+    quest: dashboard.quest,
     showMarkers: dashboard.showMarkers,
-    enableClustering: dashboard.enableClustering,
+    enableClustering: dashboard.enableClustering && !dashboard.token,
     showPolyline: dashboard.showPolyline,
     showGeofenceHits: dashboard.showGeofenceHits,
     isWatching: dashboard.isWatching,
-    currentLocation: dashboard.currentLocation,
+    currentLocation, //dashboard.currentLocation,
     selectedLocation: selectedLocationSelector(state),
     isActiveTab: state.dashboard.activeTab === 'map',
     testMarkers: dashboard.testMarkers,

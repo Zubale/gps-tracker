@@ -140,7 +140,7 @@ const FilterView = ({
       <div className={classes.cardsContainer}>
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <Card style={cardMargins}>
-            <CardHeader className={classes.header} title='Locations' />
+            <CardHeader className={classes.header} title='Ubicaciones' />
             <CardContent className={classes.relative}>
               <RemoveAnimationProvider>
                 <OrgField
@@ -220,7 +220,7 @@ const FilterView = ({
             </CardContent>
           </Card>
           <Card style={cardMargins}>
-            <CardHeader className={classes.header} title='Map' />
+            <CardHeader className={classes.header} title='Mapa' />
             <CardContent>
               <FormControlLabel
                 control={(

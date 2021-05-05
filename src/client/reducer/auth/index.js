@@ -98,9 +98,11 @@ export const checkAuth =
         setAuth({ org, accessToken });
         await dispatch(loadInitialData(org));
       } else {
+        console.log('no loadInitialData')
         await dispatch(setAuthError(error));
       }
     } catch (e) {
+      console.log('checkAuth')
       console.error('checkAuth', e);
     }
   };

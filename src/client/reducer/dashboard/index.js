@@ -477,7 +477,7 @@ export const reload =
     await dispatch(setIsLoading(true));
     loadUsers && await dispatch(loadOrgTokens());
     await dispatch(autoselectOrInvalidateSelectedOrgToken());
-    await dispatch(loadDevices());
+    loadUsers && await dispatch(loadDevices());
     await dispatch(autoselectOrInvalidateSelectedDevice());
     await dispatch(loadLocations());
     await dispatch(loadCurrentLocation());
@@ -488,14 +488,15 @@ export const reload =
 
 export const loadInitialData =
   (id: string): ThunkAction => async (dispatch: Dispatch, getState: GetState): Promise<void> => {
+    console.log('loadInitialData')
     const { dashboard: { hasData } } = getState();
     if (hasData) {
       console.error('extra call after everything is set up!');
       return;
     }
     await dispatch(setOrgTokenFromSearch(id));
-    const { dashboard: { orgTokenFromSearch } } = getState();
-    const existingSettings = getSettings(orgTokenFromSearch);
+    const { dashboard } = getState();
+    const existingSettings = getSettings(dashboard.orgTokenFromSearch);
     const urlSettings = await getUrlSettings();
     await dispatch(applyExistingSettings(existingSettings));
     await dispatch(applyExistingSettings(urlSettings));
@@ -503,7 +504,9 @@ export const loadInitialData =
     await dispatch(reload());
     await dispatch(setHasData(true));
     // set a timer as a side effect
-    setTimeout(() => dispatch(reload()), 60 * 1000);
+    let quest = getState().dashboard.quest
+    console.log('dashboard quest ', quest)
+    setTimeout(() => dispatch(reload({ loadUsers: false })), quest ? 15 : 150 * 1000);
     GA.sendEvent('tracker', `load:${id}`);
   };
 

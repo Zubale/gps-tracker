@@ -8,6 +8,7 @@ import { type AuthInfo, type AuthSettings } from 'reducer/types';
 import cloneState from 'utils/cloneState';
 import axios from 'axios'
 import get from 'lodash/get';
+import { API_URL } from './constants';
 
 export type StoredSettings = {|
   activeTab: Tab,
@@ -114,6 +115,7 @@ function encodeEndDate(date: ?Date) {
   }
   return `${y}-${mon}-${d} ${h}:${min}`;
 }
+
 export async function getUrlSettings(): $Shape<StoredSettings> {
 
   const params = queryString.parse(window.location.search);
@@ -132,28 +134,32 @@ export async function getUrlSettings(): $Shape<StoredSettings> {
     window.location.replace("https://zubale.com");
   }
   let quest = null
+  console.log('result.token is', result.token)
   if ( result.token ) {
     try {
-      const response = await axios.get(`https://gateway-api-prod.zubale.com/quests/${result.token}`, {
-        headers: {
-          'Authorization': 'cfe6d99531ee4deb9f6600ddd1e09bd4',
-          'Content-Type': 'application/json'
-        }
-      })
-      console.log({response})
-      quest = response.data
+      console.log('before graphql')
+      try {
+        const response = await axios.post(`${API_URL}/quest/token`, {token: result.token})
+        quest = response.data.data.quest
+      } catch (e) {
+        console.error('token error', e);
+      }
+      console.log('quest is', quest)
+
     } catch (error) {
       console.log({error})
     }
   }
-  if ( get(quest, 'pickingAndDelivery', false) && get(quest, 'reservation.userId', '') ) {
+  // /jobs/events?type=delivery&platorm=walmart&id=order_id
+  if ( get(quest, 'pickingAndDelivery', false) && get(quest, 'reservation.userId', false) ) {
+    result.quest = quest
     result.deviceId = quest.reservation.userId
-    result.startDate = new Date(quest.pickingAndDelivery.pickupWindowStartTime)
-    result.endDate = new Date(quest.pickingAndDelivery.deliveryWindowEndTime)
-    console.log('quest.pickingAndDelivery.pickupWindowStartTime', quest.pickingAndDelivery.pickupWindowStartTime)
-    console.log('quest.pickingAndDelivery.deliveryWindowEndTime', quest.pickingAndDelivery.deliveryWindowEndTime)
+    result.startDate = new Date(quest.pickingAndDelivery.pickupWindowStartTime) //.replace('15:00', '12:00'))
+    result.endDate = new Date(quest.pickingAndDelivery.deliveryWindowEndTime) //.replace('21:00', '20:41'))
+    console.log('quest.pickingAndDelivery.pickupWindowStartTime', result.startDate)
+    console.log('quest.pickingAndDelivery.deliveryWindowEndTime', result.endDate)
   }
-  console.log({result})
+  console.log('attention',{result})
   return result;
 }
 export function setUrlSettings(

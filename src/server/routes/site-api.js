@@ -27,6 +27,7 @@ import {
 } from '../models/Location';
 import { withAuth, adminToken } from '../config';
 import { getOrgs, findOne } from '../models/Org';
+import axios from 'axios'
 
 const router = new Router();
 
@@ -279,6 +280,149 @@ router.post('/auth', async (req, res) => {
 
   return res.status(401)
     .send({ org: login, error: 'Await not public account and right password' });
+});
+
+router.post('/quest/token', async (req, res) => {
+  const { token } = req.body || {};
+
+  const CONSTANTS = {
+    GRAPHQL_USERNAME: 'graphql',
+    GRAPHQL_PASSWORD: 'sFTBPpVwoOVqfFkjU1',
+    GRAPHQL_BASE_URL: 'https://graphql.zubale.com/quests/graphql/ui',
+  }
+  const graphqlClient = axios.create({
+    baseURL: CONSTANTS.GRAPHQL_BASE_URL,
+    timeout: 30000,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    auth: {
+      username: CONSTANTS.GRAPHQL_USERNAME,
+      password: CONSTANTS.GRAPHQL_PASSWORD,
+    },
+  })
+
+    let error = null
+    let data = null
+
+    try {
+      console.log('GRAPHQL ready in try')
+      const response = await graphqlClient.post(CONSTANTS.QUEST_GRAPHQL, {
+        query: `
+          {
+            getQuest(id: "${token}") {
+            deliveryDistance
+            id
+            type
+            duration
+            rewardAmount
+            cycle {
+              endDate
+              startDate
+            }
+            location {
+              latitude
+              longitude
+            }
+            brand {
+                id
+                name
+                zubaleId
+            }
+            storeDepartment
+            store {
+                id
+                address
+                name
+                storeNumber
+                retailer {
+                    id
+                    name
+                    logoUrl
+                }
+                mapUrl
+            }
+            country {
+              currencySymbol
+            }
+            closed
+            status
+            userTypes
+            available
+            reservationOrder
+            reservationType
+            formType
+            formInfo {
+              formId
+              phoneNumberFieldKey
+              questFieldKey
+              storeFieldKey
+              url
+              validGoogleForm
+              validZubaleForm                  
+            }
+            reservation {
+              date
+              expirationDate
+              userId
+            }
+            pickingAndDelivery {
+              checkoutNote
+              zubaleOrderId
+              deepLinkBaseUrl
+              deliveryWindowEndTime
+              deliveryWindowStarTime
+              dropOffLocation {
+                latitude
+                longitude
+              }
+              encryptedToken
+              externalDeliveryId
+              externalOrderId
+              pickupWindowEndTime
+              pickupWindowStartTime
+              storeArrivalTime
+              customerInfo {
+                address
+                name
+                phoneNumber
+              }
+              orderInfo {
+                size
+                totalLineItems
+                totalQuantity
+                totalVolume
+                totalWeight
+              }
+              paymentInfo {
+                payOnDeliveryType
+                paymentMode
+                paymentStatus
+              }
+              allowResubmission
+            }
+          }
+        }
+        `,
+        variables: null,
+        operationName: null,
+      })
+    // console.log('GRAPHQL raw response', response)
+    if (response.data && response.data.errors) {
+      error = {
+        message: 'Token inválido...',
+        type: 'general',
+      }
+    } else {
+      data = {quest: response.data.data.getQuest}
+    }
+  } catch (err) {
+    console.log('response Token inválido', err)
+    error = err
+  }
+
+  return res.send({data, error,});
 });
 
 router.post('/jwt', async (req, res) => {

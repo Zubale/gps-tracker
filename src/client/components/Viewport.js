@@ -18,6 +18,7 @@ import {
 
 import { logout as logoutAction } from 'reducer/auth';
 
+import moment from 'moment'
 import HeaderView from './HeaderView';
 import FilterView from './FilterView';
 import TabPanel from './TabPanel';
@@ -33,6 +34,7 @@ type StateProps = {|
   isLocationSelected: boolean,
   activeTabIndex: 0 | 1,
   location: ?Location,
+  quest: ?Object,
 |};
 type DispatchProps = {|
   onChangeActiveTab: (tab: TabType) => any,
@@ -48,6 +50,7 @@ const Viewport = ({
   accessToken,
   location,
   logout,
+  quest,
 }: Props) => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
@@ -58,6 +61,22 @@ const Viewport = ({
   const [open, setOpen] = React.useState(hide_drawer === '1' || has_token > 0 ? false : true);
   const classes = useStyles();
 
+  const details = has_token && quest ? [
+    {title: "Orden", value: quest.pickingAndDelivery.externalOrderId},
+    {title: "Referencia", value: quest.pickingAndDelivery.checkoutNote || quest.pickingAndDelivery.externalOrderId},
+    {title: "Hora de entrega", value: moment(quest.pickingAndDelivery.deliveryWindowEndTime).format('LLL')},
+    {title: "Tienda que despacha", value: `${quest.store.retailer.name} ${quest.store.name}`},
+
+    {title: "Cliente", value: quest.pickingAndDelivery.customerInfo.name},
+    {title: "Dirección", value: quest.pickingAndDelivery.customerInfo.address},
+    {title: "Distancia aproximada", value: (quest.deliveryDistance || 'N/A') + ' Kms'},
+    {title: "Teléfono", value: quest.pickingAndDelivery.customerInfo.phoneNumber},
+    
+    {title: "Tipo de pago", value: quest.pickingAndDelivery.paymentInfo.paymentMode},
+
+    
+  ] : []
+
   return (
     <div className={classes.root}>
       <CssBaseline />
@@ -66,6 +85,7 @@ const Viewport = ({
         setOpen={setOpen}
         location={location}
         open={open}
+        showMenu={!has_token}
       >
         <div className={classes.actionRow}>
           <Tabs
@@ -74,27 +94,28 @@ const Viewport = ({
             value={tabIndex}
             onChange={(e: Event, index: number) => setTabIndex(index)}
           >
-            <Tab label='Map' />
-            {
-              !has_token && <Tab label='Data' />
-            }
+            <Tab label='Mapa' />
+            <Tab label={has_token ? 'Información' : 'Coordenadas'} />
           </Tabs>
-          {accessToken && shared && (
+          {/* {accessToken && shared && (
             <IconButton onClick={logout} className={classes.logout} aria-label='logout'>
               <ExitToAppIcon />
             </IconButton>
-          )}
+          )} */}
         </div>
       </HeaderView>
-      <Drawer
-        className={classes.drawer}
-        variant='persistent'
-        anchor='left'
-        open={open}
-        classes={{ paper: classes.drawerPaper }}
-      >
-        <FilterView setOpen={setOpen} />
-      </Drawer>
+      {
+        !has_token && 
+        <Drawer
+          className={classes.drawer}
+          variant='persistent'
+          anchor='left'
+          open={open}
+          classes={{ paper: classes.drawerPaper }}
+        >
+          <FilterView setOpen={setOpen} />
+        </Drawer>
+      }
       <main
         className={clsx(classes.content, {
           [classes.contentShift]: open,
@@ -115,8 +136,29 @@ const Viewport = ({
             classes.whiteBackground,
           )}
         >
-          <WatchModeWarning />
-          <ListView style={{ width: 1300 }} />
+          {
+            has_token ? 
+              <div className={''} style={{padding: 20, maxWidth: 500,}}>
+                <h3>DETALLES DE LA ORDEN</h3>
+                {
+                  details.map((detail, index) => 
+                  <div style={{marginBottom: 1, width: '100%', display: 'flex', backgroundColor: index % 2 ? '#ffffff' : '#f0f0f0', padding: 5}}>
+                    <div style={{width: 100}}>
+                      {detail.title}
+                    </div>
+                    <div style={{display: 'flex', flex: 1}}>
+                    {detail.value}
+                    </div>
+                  </div>)
+                }
+              </div>
+            :
+            [
+              <WatchModeWarning />,
+              <ListView style={{ width: 1300 }} />
+            ]
+          }
+          
         </TabPanel>
       </main>
       <Drawer
@@ -137,6 +179,7 @@ const mapStateToProps = (state: GlobalState): StateProps => ({
   activeTabIndex: state.dashboard.activeTab === 'map' ? 0 : 1,
   isLocationSelected: !!state.dashboard.selectedLocationId,
   location: getLocation(state),
+  quest: state.dashboard.quest,
 });
 const mapDispatchToProps: DispatchProps = {
   onChangeActiveTab: changeActiveTab,

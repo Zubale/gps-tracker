@@ -20,6 +20,7 @@ type Props = {|
     appBarBothShift: string,
     menuButton: string,
     hide: string,
+    showMenu: boolean,
   |},
   setOpen: (open: boolean) => any,
   open: boolean,
@@ -28,7 +29,7 @@ type Props = {|
 |};
 
 const HeaderView = ({
-  classes, open, setOpen, children, location,
+  classes, open, setOpen, children, location, showMenu,
 }: Props) => (
   <AppBar
     position='static'
@@ -39,16 +40,19 @@ const HeaderView = ({
     })}
   >
     <Toolbar style={style}>
-      <IconButton
-        edge='start'
-        className={clsx(classes.menuButton, open && classes.hide)}
-        color='inherit'
-        onClick={() => setOpen(true)}
-        aria-label='menu'
-      >
-        <MenuIcon />
-      </IconButton>
-      <Typography variant='h6'><img src="https://zubale-zoul-prod.herokuapp.com/images/logo.png" style={{display: 'block', float: 'left', marginTop: 6, marginRight: 5}}/> GPS Tracker</Typography>
+      {
+        showMenu && 
+        <IconButton
+          edge='start'
+          className={clsx(classes.menuButton, open && classes.hide)}
+          color='inherit'
+          onClick={() => setOpen(true)}
+          aria-label='menu'
+        >
+          <MenuIcon />
+        </IconButton>
+      }
+      <Typography variant='h6'><img src="https://zubale-zoul-prod.herokuapp.com/images/logo.png" style={{display: 'block', float: 'left', marginTop: 6, marginRight: 5}}/> Live Tracking</Typography>
     </Toolbar>
     {children}
   </AppBar>
