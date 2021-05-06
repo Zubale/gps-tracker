@@ -134,6 +134,7 @@ export async function getUrlSettings(): $Shape<StoredSettings> {
     window.location.replace("https://zubale.com");
   }
   let quest = null
+  let events = null
   console.log('result.token is', result.token)
   if ( result.token ) {
     try {
@@ -141,6 +142,7 @@ export async function getUrlSettings(): $Shape<StoredSettings> {
       try {
         const response = await axios.post(`${API_URL}/quest/token`, {token: result.token})
         quest = response.data.data.quest
+        events = response.data.data.events
       } catch (e) {
         console.error('token error', e);
       }
@@ -153,9 +155,21 @@ export async function getUrlSettings(): $Shape<StoredSettings> {
   // /jobs/events?type=delivery&platorm=walmart&id=order_id
   if ( get(quest, 'pickingAndDelivery', false) && get(quest, 'reservation.userId', false) ) {
     result.quest = quest
+    result.events = events
+    let startTime = quest.pickingAndDelivery.pickupWindowStartTime
+    let entdTime = quest.pickingAndDelivery.deliveryWindowEndTime
+    if ( events['READY_FOR_DELIVERY'] ) {
+      startTime = events['READY_FOR_DELIVERY'].created_at
+      console.log('we have READY_FOR_DELIVERY', startTime)
+    }
+    if ( events['AT_DROPOFF'] ) {
+      entdTime = events['AT_DROPOFF'].created_at
+      console.log('we have AT_DROPOFF', entdTime)
+    }
+
     result.deviceId = quest.reservation.userId
-    result.startDate = new Date(quest.pickingAndDelivery.pickupWindowStartTime) //.replace('15:00', '12:00'))
-    result.endDate = new Date(quest.pickingAndDelivery.deliveryWindowEndTime) //.replace('21:00', '20:41'))
+    result.startDate = new Date(startTime) //.replace('15:00', '12:00'))
+    result.endDate = new Date(entdTime) //.replace('21:00', '20:41'))
     console.log('quest.pickingAndDelivery.pickupWindowStartTime', result.startDate)
     console.log('quest.pickingAndDelivery.deliveryWindowEndTime', result.endDate)
   }

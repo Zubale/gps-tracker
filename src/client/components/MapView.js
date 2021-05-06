@@ -84,6 +84,16 @@ class MapView extends Component<Props, MapState> {
   }
 
   componentDidMount () {
+    // setTimeout(function(){
+    //   const {quest, locations} = this.props
+    //   if ( quest && quest.location.latitude && !locations.length) {
+    //     this.state = {
+    //       center: { lat: quest.location.latitude, lng: quest.location.longitude },
+    //       zoom: 14,
+    //     };
+    //   }
+    //   console.log('NOW HERE')
+    // }.bind(this), 10000);
     fitBoundsBus.subscribe(this.fitBounds);
     changeTabBus.subscribe(this.changeTab);
   }

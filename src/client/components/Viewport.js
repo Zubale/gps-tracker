@@ -35,6 +35,7 @@ type StateProps = {|
   activeTabIndex: 0 | 1,
   location: ?Location,
   quest: ?Object,
+  events: any,
 |};
 type DispatchProps = {|
   onChangeActiveTab: (tab: TabType) => any,
@@ -51,6 +52,7 @@ const Viewport = ({
   location,
   logout,
   quest,
+  events,
 }: Props) => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
@@ -61,21 +63,34 @@ const Viewport = ({
   const [open, setOpen] = React.useState(hide_drawer === '1' || has_token > 0 ? false : true);
   const classes = useStyles();
 
-  const details = has_token && quest ? [
-    {title: "Orden", value: quest.pickingAndDelivery.externalOrderId},
-    {title: "Referencia", value: quest.pickingAndDelivery.checkoutNote || quest.pickingAndDelivery.externalOrderId},
-    {title: "Hora de entrega", value: moment(quest.pickingAndDelivery.deliveryWindowEndTime).format('LLL')},
-    {title: "Tienda que despacha", value: `${quest.store.retailer.name} ${quest.store.name}`},
+  let details = []
 
-    {title: "Cliente", value: quest.pickingAndDelivery.customerInfo.name},
-    {title: "Dirección", value: quest.pickingAndDelivery.customerInfo.address},
-    {title: "Distancia aproximada", value: (quest.deliveryDistance || 'N/A') + ' Kms'},
-    {title: "Teléfono", value: quest.pickingAndDelivery.customerInfo.phoneNumber},
-    
-    {title: "Tipo de pago", value: quest.pickingAndDelivery.paymentInfo.paymentMode},
+  if ( has_token && quest ) {
+    details.push({title: "Orden", value: quest.pickingAndDelivery.externalOrderId})
+    details.push({title: "Referencia", value: quest.pickingAndDelivery.checkoutNote || quest.pickingAndDelivery.externalOrderId})
+    details.push({title: "Tienda que despacha", value: `${quest.store.retailer.name} ${quest.store.name}`})
+    details.push({title: "Hora de entrega", value: moment(quest.pickingAndDelivery.deliveryWindowEndTime).subtract(2, 'hours').format('LLL') + ' - ' + moment(quest.pickingAndDelivery.deliveryWindowEndTime).format('LLL')})
+    details.push({title: "Tipo de pago", value: quest.pickingAndDelivery.paymentInfo.paymentMode})
 
+    // details.push({title: "Detalles de entrega", value: ''})
+
+    console.log({events})
+    if ( events ) {
+      console.log({events})
+      if ( events['TASK_ASSIGNED'] ) {
+        let event = events['TASK_ASSIGNED']
+        let {shopperDetails} = event.payload
+        details.push({title: 'Repartidor', value: `${shopperDetails.firstName} ${shopperDetails.lastName}`})
+        details.push({title: 'Vehículo del repartidor', value: `${shopperDetails.vehicle.model} ${shopperDetails.vehicle.licensePlateNumber} ${shopperDetails.vehicle.year}`})
+      }
+    }
     
-  ] : []
+    details.push({title: "Cliente", value: quest.pickingAndDelivery.customerInfo.name})
+    details.push({title: "Dirección de entrega", value: quest.pickingAndDelivery.customerInfo.address})
+    if ( quest.deliveryDistance )
+      details.push({title: "Distancia aproximada", value: (quest.deliveryDistance || 'N/A') + ' Kms'})
+    details.push({title: "Teléfono de cliente", value: quest.pickingAndDelivery.customerInfo.phoneNumber})
+  }
 
   return (
     <div className={classes.root}>
@@ -142,9 +157,9 @@ const Viewport = ({
                 <h3>DETALLES DE LA ORDEN</h3>
                 {
                   details.map((detail, index) => 
-                  <div style={{marginBottom: 1, width: '100%', display: 'flex', backgroundColor: index % 2 ? '#ffffff' : '#f0f0f0', padding: 5}}>
-                    <div style={{width: 100}}>
-                      {detail.title}
+                  <div style={{marginBottom: 1, width: '100%', display: 'flex', backgroundColor: index % 2 ? '#ffffff' : '#f0f0f0', padding: 7}}>
+                    <div style={{width: 140, fontSize: 14}}>
+                      <b>{detail.title.toUpperCase()}</b>
                     </div>
                     <div style={{display: 'flex', flex: 1}}>
                     {detail.value}
@@ -180,6 +195,7 @@ const mapStateToProps = (state: GlobalState): StateProps => ({
   isLocationSelected: !!state.dashboard.selectedLocationId,
   location: getLocation(state),
   quest: state.dashboard.quest,
+  events: state.dashboard.events,
 });
 const mapDispatchToProps: DispatchProps = {
   onChangeActiveTab: changeActiveTab,

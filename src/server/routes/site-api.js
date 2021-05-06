@@ -282,6 +282,54 @@ router.post('/auth', async (req, res) => {
     .send({ org: login, error: 'Await not public account and right password' });
 });
 
+const zubaleClient = () => {
+  // pending caching expiration
+  const getMaxAge = (res) => res.expires_in * 1000 // expires_in is seconds
+  const interceptor = (getToken) => {
+    return async (config) => {
+      let current = null
+      const now = Date.now()
+      const token = await getToken()
+      // console.log(`got from server(${JSON.stringify(token)})`)
+      current = {
+        token: token.access_token,
+        // pending caching expiration
+        expiration: Date.now() + getMaxAge(token),
+      }
+      config.headers['Authorization'] = `Bearer ${current.token}`
+      // console.log('new config', config)
+      return config
+    }
+  }
+
+  const client = (url, data, config) => {
+    return () => axios.post(url, data, config).then((res) => res.data)
+  }
+
+  const apiClient = axios.create({
+    baseURL: 'https://api.zubale.com/',
+    timeout: 10000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  const getClientCredentials = client(
+    `https://api.zubale.com/oauth2/token`,
+    {
+      grant_type: 'client_credentials',
+    },
+    {
+      auth: {
+        username: 'y7FBQItecB52ztGHISATBVUB7rKlkmCH',
+        password: 'iB2zwXQS47ZVqM0CBBYmMTEn2GRpvFbC',
+      },
+    },
+  )
+  apiClient.interceptors.request.use(interceptor(getClientCredentials))
+  return apiClient
+}
+
+
 router.post('/quest/token', async (req, res) => {
   const { token } = req.body || {};
 
@@ -415,7 +463,24 @@ router.post('/quest/token', async (req, res) => {
         type: 'general',
       }
     } else {
-      data = {quest: response.data.data.getQuest}
+      data = {quest: response.data.data.getQuest, events: {}}
+
+      const responseWally = await zubaleClient().get(`jobs/events?type=delivery&platform=${String(data.quest.type.split('_')[0]).toLowerCase()}&id=${data.quest.pickingAndDelivery.externalOrderId}`, {})
+      .catch((response) => {
+        console.log('error responseWally', response)
+        return response
+        return (error = err.response.data.errors)
+      })
+      if (responseWally.data && responseWally.data.data && responseWally.data.data.events) {
+        const eventsRaw = responseWally.data.data.events
+        let events = {}
+        const ignoredStatus = ['APPROVED', 'DELIVERY_COMPLETED', 'SUBMITTED']
+        eventsRaw.map(event => {
+          if ( !ignoredStatus.includes(event.payload.status) )
+            events[event.payload.status] = {...event, event: undefined}
+        })
+        data.events = events
+      }
     }
   } catch (err) {
     console.log('response Token inválido', err)
