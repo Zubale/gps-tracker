@@ -1,0 +1,98 @@
+name: CD (prod)
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: ${{ secrets.GKE_PROD_CLUSTER }}
+  GKE_REGION: ${{ secrets.GKE_PROD_REGION }}
+  NAMESPACE: api
+  IMAGE: ${{ secrets.GKE_IMAGE }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '290.0.1'
+          service_account_key: ${{ secrets.GKE_SA_KEY }}
+          project_id: ${{ secrets.GKE_PROJECT }}
+      - run: |-
+          gcloud --quiet auth configure-docker
+      - run: |-
+          gcloud container clusters get-credentials "$GKE_CLUSTER" --region "$GKE_REGION"
+      - name: Build docker image
+        run: |-
+          docker pull "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" > /dev/null || \
+          (docker pull "gcr.io/$PROJECT_ID/$IMAGE:snapshot"; \
+            DOCKER_BUILDKIT=1 docker build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            -t "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" \
+            -t "gcr.io/$PROJECT_ID/$IMAGE:snapshot" \
+            --cache-from "gcr.io/$PROJECT_ID/$IMAGE:snapshot" \
+            . && \
+            docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" && \
+            docker push "gcr.io/$PROJECT_ID/$IMAGE:snapshot"
+          )
+
+      - uses: chrnorm/deployment-action@releases/v1
+        name: Create GitHub deployment
+        id: deployment
+        with:
+          token: "${{ github.token }}"
+          target_url: https://api.zubale.com
+          environment: production
+          description: |
+            revision: $GITHUB_SHA
+
+      - uses: azure/setup-helm@v1
+        id: install_helm
+
+      - name: Deploy Helm chart
+        working-directory: ./charts/gps-tracker
+        run: |-
+          helm dependency update
+          helm \
+          -n "$NAMESPACE" \
+          upgrade "$IMAGE" \
+          ./ \
+          --wait \
+          --reuse-values \
+          --set image.tag="$GITHUB_SHA"
+
+      - uses: chrnorm/deployment-status@releases/v1
+        if: success()
+        with:
+          token: "${{ github.token }}"
+          target_url: https://api.zubale.com
+          state: "success"
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+
+      - if: success()
+        run: echo "RELEASE_TAG=v$(cat VERSION)-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+      - name: Create Release
+        if: success()
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          release_name: ${{ env.RELEASE_TAG }}
+          body: ""
+          draft: false
+          prerelease: false
+
+      - uses: chrnorm/deployment-status@releases/v1
+        if: failure()
+        with:
+          token: "${{ github.token }}"
+          target_url: https://api.zubale.com
+          state: "failure"
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}

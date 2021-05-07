@@ -1,0 +1,15 @@
+replicaCount: 1
+image:
+  repository: gcr.io/kubernetescluster-265514/gps-tracker
+  tag: "snapshot"
+
+ADMIN_TOKEN: "zubale"
+DATABASE_URL: "postgres://edbngdcthxzupt:f44e60b32d3fdd9eedc85921b36e694fba70ae64952a5c031b09e2e66eeadce1@ec2-54-145-249-177.compute-1.amazonaws.com:5432/dfsrmj16kaod5h"
+GOOGLE_MAPS_API_KEY: "AIzaSyDaeHT-h8lqzMRcEkGrr7Gu73cmMBYYL78"
+NODE_TLS_REJECT_UNAUTHORIZED: "0"
+NPM_CONFIG_PRODUCTION: "false"
+PASSWORD: "12345678"
+SHARED_DASHBOARD: "1"
+
+
+
