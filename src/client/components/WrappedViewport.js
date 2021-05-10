@@ -54,6 +54,12 @@ const WrappedViewport = ({
     token = 'zubale'
   }
 
+  if ( has_token ) {
+    localStorage.setItem('settings#auth', '')
+    localStorage.setItem('twk_token', '')
+    localStorage.setItem('ngIdle.expiry', '')
+  }
+
   const isAdminPath = token === 'admin';
   const hasToken = (!!org || (!isAdminPath && !!token));
 

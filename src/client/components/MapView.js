@@ -65,6 +65,7 @@ class MapView extends Component<Props, MapState> {
   polyline: any = null;
   currentLocationMarker: any = null;
   locationAccuracyCircle: any = null;
+  zoom: number = 17;
   updateFlags = {
     needsMarkersRedraw: true,
     needsTestMarkersRedraw: true,
@@ -78,8 +79,8 @@ class MapView extends Component<Props, MapState> {
     super(props, context);
 
     this.state = {
-      center: { lat: -25.363882, lng: 131.044922 },
-      // zoom: 18,
+      center: { lat: 19.4120118, lng: -99.142978 },
+      zoom: 17,
     };
   }
 
@@ -110,8 +111,22 @@ class MapView extends Component<Props, MapState> {
     }
   };
 
+
+  _alreadySetPosition = false
+  alreadySetPosition = () => {
+    if ( this.props.simpleUI ) {
+      setTimeout(function(){
+        this._alreadySetPosition = true
+      }.bind(this), 200);
+    }
+    return this.props.simpleUI ? this._alreadySetPosition : false
+  }
+
   // Fit Bounds, postpone if gmap is not ready, also postpone if tab is not active
   fitBounds = (payload: FitBoundsPayload) => {
+    if ( this.alreadySetPosition() ) {
+      return
+    }
     const { isActiveTab, locations, currentLocation, quest } = this.props;
     if (!isActiveTab) {
       this.postponedFitBoundsPayload = payload;
@@ -758,7 +773,7 @@ class MapView extends Component<Props, MapState> {
         yesIWantToUseGoogleMapApiInternals
         bootstrapURLKeys={{
           key: API_KEY,
-          libraries: 'geometry',
+          libraries: ['geometry', 'places'],
         }}
         mapContainerStyle={{marginLeft: 60}}
         className='map'
@@ -772,9 +787,13 @@ class MapView extends Component<Props, MapState> {
             id={'storeContainer'}
             key={'storeContainer'}
             className={'tooltipContainer'}
-            data-tip={`Ubicacieon de la tienda ${quest.store.retailer.name}`} data-for='storeInfo'
             lat={quest.location.latitude}
             lng={quest.location.longitude}
+            onClick={() => {
+              console.log('this.gmap', this.gmap)
+              this.gmap.setZoom(19)
+              this.gmap.setCenter(new google.maps.LatLng(quest.location.latitude, quest.location.longitude));
+            }}
             />,
           <div
             id={'dropOffContainer'}
@@ -783,6 +802,11 @@ class MapView extends Component<Props, MapState> {
             data-tip="Ubicación del cliente" data-for='dropOffInfo'
             lat={quest.pickingAndDelivery.dropOffLocation.latitude}
             lng={quest.pickingAndDelivery.dropOffLocation.longitude}
+            onClick={() => {
+              console.log('this.gmap', this.gmap)
+              this.gmap.setZoom(19)
+              this.gmap.setCenter(new google.maps.LatLng(quest.pickingAndDelivery.dropOffLocation.latitude, quest.pickingAndDelivery.dropOffLocation.longitude));
+            }}
           >
             <div className={'tooltip'}>
               {quest.pickingAndDelivery.customerInfo.name}
@@ -800,6 +824,11 @@ class MapView extends Component<Props, MapState> {
             data-tip="Ubicación del paquete en ruta" data-for='zubaleroInfo'
             lat={currentLocation.latitude}
             lng={currentLocation.longitude}
+            onClick={() => {
+              console.log('this.gmap', this.gmap)
+              this.gmap.setZoom(19)
+              this.gmap.setCenter(new google.maps.LatLng(currentLocation.latitude, currentLocation.longitude));
+            }}
           >
             <img src="/images/zubale_pin.png" style={{width: 46, height: 87, position: 'absolute', top: -87, left: -23}}/>
           </div>
