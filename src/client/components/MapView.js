@@ -648,7 +648,7 @@ class MapView extends Component<Props, MapState> {
     if (/*isWatching && */currentLocation) {
       console.time('renderMarkers: Current Location');
       const latLng = new google.maps.LatLng(currentLocation.latitude, currentLocation.longitude);
-      this.gmap.setCenter(latLng);
+      // this.gmap.setCenter(latLng);
       this.currentLocationMarker.setMap(this.gmap);
       this.locationAccuracyCircle.setMap(this.gmap);
       this.currentLocationMarker.setPosition(latLng);
