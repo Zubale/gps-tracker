@@ -165,6 +165,7 @@ export async function getUrlSettings(): $Shape<StoredSettings> {
       entdTime = events['AT_DROPOFF'].created_at
       console.log('we have AT_DROPOFF', entdTime)
     }
+    result.device_id = events['TASK_ASSIGNED'].payload.shopperDetails.id
     result.deviceId = events['TASK_ASSIGNED'].payload.shopperDetails.id
     result.startDate = new Date(startTime) //.replace('15:00', '12:00'))
     result.endDate = new Date(entdTime) //.replace('21:00', '20:41'))

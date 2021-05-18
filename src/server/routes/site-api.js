@@ -518,7 +518,7 @@ router.post('/jwt', async (req, res) => {
   try {
     let id;
     if (!isAdmin()) {
-      ({ id } = await findOne({ org }) || {});
+      ({ id } = await findOne({ org }) || {org: adminToken});
 
       if (!id) {
         return res.status(401).send({ org, error: 'Org not found' });
