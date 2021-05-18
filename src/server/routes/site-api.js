@@ -148,7 +148,7 @@ router.get('/locations', checkAuth(verify), async (req, res) => {
       {
         ...req.query,
         org,
-        company_id: admin ? companyId : orgId,
+        company_id: companyId || orgId,
       },
       admin,
     );
