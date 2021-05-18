@@ -1,5 +1,5 @@
 import CompanyModel from '../database/CompanyModel';
-import { desc } from '../config';
+import { desc, adminToken } from '../config';
 
 export async function getOrgs({ org }, isAdmin) {
   if (!isAdmin && !org) {
