@@ -6,7 +6,7 @@ export async function getOrgs({ org }, isAdmin) {
     return [
       {
         id: 1,
-        company_token: 'bogus',
+        company_token: adminToken,
       },
     ];
   }
