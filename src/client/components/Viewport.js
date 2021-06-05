@@ -70,7 +70,7 @@ const Viewport = ({
     details.push({title: "Referencia", value: quest.pickingAndDelivery.checkoutNote || quest.pickingAndDelivery.externalOrderId})
     details.push({title: "Tienda que despacha", value: `${quest.store.retailer.name} ${quest.store.name}`})
     details.push({title: "Hora de entrega", value: moment(quest.pickingAndDelivery.deliveryWindowEndTime).subtract(2, 'hours').format('LLL') + ' - ' + moment(quest.pickingAndDelivery.deliveryWindowEndTime).format('LLL')})
-    details.push({title: "Tipo de pago", value: quest.pickingAndDelivery.paymentInfo.paymentMode})
+    details.push({title: "Tipo de pago", value: quest.pickingAndDelivery.paymentInfo ? quest.pickingAndDelivery.paymentInfo.paymentMode : ''})
 
     // details.push({title: "Detalles de entrega", value: ''})
 

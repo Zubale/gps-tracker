@@ -502,11 +502,16 @@ router.post('/quest/token', async (req, res) => {
     let events = {}
     const ignoredStatus = ['APPROVED', 'DELIVERY_COMPLETED', 'SUBMITTED']
     eventsRaw.map(event => {
-      if ( !ignoredStatus.includes(event.payload.status) )
+      if ( !ignoredStatus.includes(event.payload.status) ){
+        if ( event.event === 'Elixir.Wally.Quests.Events.QuestCreated' ) {
+          event.payload.status = 'READY'
+        }
         events[event.payload.status] = {...event, event: undefined}
+      }
     })
     data.quest = events.READY.payload.created_quest
     data.events = events
+    data.raw = eventsRaw
   }
 
   return res.send({data, error,});

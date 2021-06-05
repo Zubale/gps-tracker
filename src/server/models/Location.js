@@ -54,7 +54,7 @@ async function getDeviceId(user_id, company_id){
     ],
     raw: true,
   });
-  return result.id;
+  return result ? result.id : null;
 }
 
 export async function getLocations(params, isAdmin) {
@@ -65,6 +65,9 @@ export async function getLocations(params, isAdmin) {
   const whereConditions = {};
   if (params.start_date && params.end_date) {
     whereConditions.recorded_at = { [Op.between]: [new Date(params.start_date), new Date(params.end_date)] };
+  }
+  if (!params.user_id) {
+    return []
   }
   const user_id = await getDeviceId(params.user_id, params.company_id)
   params.user_id && (whereConditions.user_id = +user_id);
