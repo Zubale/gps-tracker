@@ -160,6 +160,9 @@ export async function getUrlSettings(): $Shape<StoredSettings> {
     if ( events['READY_FOR_DELIVERY'] ) {
       startTime = events['READY_FOR_DELIVERY'].created_at
       console.log('we have READY_FOR_DELIVERY', startTime)
+    } else if ( events['ENROUTE_TO_DROPOFF'] ) {
+      startTime = events['ENROUTE_TO_DROPOFF'].created_at
+      console.log('we have ENROUTE_TO_DROPOFF', startTime)
     }
     if ( events['AT_DROPOFF'] ) {
       entdTime = events['AT_DROPOFF'].created_at
