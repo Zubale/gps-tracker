@@ -9,6 +9,7 @@ import LocationModel from '../database/LocationModel';
 import {
   AccessDeniedError,
   hydrate,
+  minified,
   isDeniedCompany,
   isDeniedDevice,
   jsonb,
@@ -84,7 +85,7 @@ export async function getLocations(params, isAdmin) {
   return locations;
 }
 
-export async function getLatestLocation(params, isAdmin) {
+export async function getLatestLocation(params, isAdmin, isMinified = false) {
   const {
     company_id: companyId,
     user_id: deviceId,
@@ -104,8 +105,18 @@ export async function getLatestLocation(params, isAdmin) {
     order: [['recorded_at', desc]],
     include,
   });
-  const result = row ? hydrate(row) : {};
+  const result = row ? isMinified ? minified(row) : hydrate(row) : {};
   return result;
+}
+
+export async function getSimpleLatestLocation(user_id) {
+  let location = null;
+  try {
+    location = await getLatestLocation({ user_id, company_id: 1 }, true, true);
+  } catch (err) {
+    // err
+  }
+  return location;
 }
 
 export async function createLocation(location, device, org) {

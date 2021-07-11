@@ -14,6 +14,7 @@ import {
   isAdminToken,
   isDDosCompany,
   isPassword,
+  calculateDistance,
   return1Gbfile,
 } from '../libs/utils';
 import { deleteDevice, getDevices } from '../models/Device';
@@ -22,6 +23,7 @@ import {
   deleteLocations,
   removeOld,
   getLatestLocation,
+  getSimpleLatestLocation,
   getLocations,
   getStats,
 } from '../models/Location';
@@ -515,6 +517,56 @@ router.post('/quest/token', async (req, res) => {
   }
 
   return res.send({data, error,});
+});
+
+router.get('/location/user/:user_id', async (req, res) => {
+  const { user_id } = req.params;
+  try {
+    const latest = await getLatestLocation({ user_id, company_id: 1 }, true, true);
+    res.send(latest);
+  } catch (err) {
+    console.info('v1: /locations/latest', user_id, err);
+    res.status(500).send({ error: 'Something failed!' });
+  }
+});
+
+router.get('/location/users', async (req, res) => {
+  const { user_ids } = req.query;
+  const ids = String(user_ids).split(',');
+  if (ids.length > 0) {
+    const locations = {};
+    await Promise.all(ids.map(async user_id => {
+      locations[user_id] = await getSimpleLatestLocation(user_id);
+    }));
+    res.send(locations);
+  } else {
+    res.send({});
+  }
+});
+
+router.get('/distance/users', async (req, res) => {
+  const { coordinates, user_ids } = req.query;
+  if (!coordinates || String(coordinates).split(',').length < 2) {
+    res.status(400).send({ error: 'Invalid coordinates' });
+  }
+  const coordinates_array = String(coordinates).split(',');
+  const latitude = coordinates_array[0];
+  const longitude = coordinates_array[1];
+  const ids = String(user_ids).split(',');
+  if (ids.length > 0) {
+    const locations = {};
+    await Promise.all(ids.map(async user_id => {
+      const userCoordinates = await getSimpleLatestLocation(user_id);
+      let distance = 10000;
+      if (userCoordinates && userCoordinates.id) {
+        distance = calculateDistance({ latitude, longitude }, userCoordinates);
+      }
+      locations[user_id] = distance;
+    }));
+    res.send(locations);
+  } else {
+    res.send({});
+  }
 });
 
 router.post('/jwt', async (req, res) => {

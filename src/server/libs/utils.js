@@ -91,6 +91,63 @@ export function hydrate(row) {
   return result;
 }
 
+export function minified(row) {
+  const record = row.toJSON();
+  ['data']
+    .filter(x => typeof record[x] === 'string')
+    .forEach(x => {
+      if (typeof record[x] === 'string') {
+        try {
+          record[x] = JSON.parse(record[x]);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(`could not parse ${x} ${record.id}`, e);
+          delete record[x];
+        }
+      }
+    });
+  const { data, device } = record;
+  const result = {
+    ...device,
+    activity_type: data.activity && data.activity.type,
+    activity_confidence: data.activity && data.activity.confidence,
+    battery_level: data.battery && data.battery.level,
+    battery_is_charging: data.battery && data.battery.is_charging,
+    ...data,
+    ...data.coords,
+    ...record,
+    uuid: data.uuid,
+  };
+  ['data', 'device', 'activity', 'battery', 'coords', 'version', 'floor', 'speed', 'heading', 'phone', 'user_id',
+    'heading_accuracy', 'framework', 'company_token', 'company_id', 'uuid', 'odometer', 'activity_confidence',
+    'updated_at'].forEach(
+    x => delete result[x],
+  );
+
+  return result;
+}
+
+// Converts numeric degrees to radians
+const toRad = val => (val * Math.PI) / 180;
+
+export const calculateDistance = (
+  userLocation,
+  customerLocation,
+) => {
+  const R = 6371; // km
+  const dLat = toRad(customerLocation.latitude - userLocation.latitude);
+  const dLon = toRad(customerLocation.longitude - userLocation.longitude);
+  const lat1 = toRad(userLocation.latitude);
+  const lat2 = toRad(customerLocation.latitude);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+  return d;
+};
+
 export function return1Gbfile(res) {
   const file1gb = resolve(__dirname, '..', '..', '..', 'text.null.gz');
   res.setHeader('Content-Encoding', 'gzip, deflate');
