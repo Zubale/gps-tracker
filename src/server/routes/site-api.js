@@ -521,14 +521,13 @@ router.post('/deliveries', async (req, res) => {
   let body = req.body || {};
   const { staging } = body;
   delete body.staging;
-
-  const responseWally = await zubaleClient(staging).post('deliveries', body)
-    .catch((response) => {
-      console.log('error responseWally', response);
-      return response;
-    });
-  console.log('responseWally', responseWally.data);
-  res.send(responseWally.data)
+  let response = null
+  try {
+    response = await zubaleClient(staging).post('deliveries', body);
+    res.status(201).send(response.data);
+  } catch (err) {
+    res.status(400).send(err.response.data);
+  }
 });
 
 router.get('/location/user/:user_id', async (req, res) => {
